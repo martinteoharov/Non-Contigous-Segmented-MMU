@@ -17,13 +17,17 @@ public class Process {
         return this.pid;
     }
 
-    // Process wants to allocate more memory
-    public void allocateMemory(){
-
+    /**
+     * Process wants to allocate more memory
+     * @param base base of allocated physical memory
+     * @param limit limit of allocated physical memory
+     */
+    public void allocateSegment(int base, int limit){
+        this.segTable.insertSegment(base, limit);
     }
 
     // Process wants to deallocate memory
-    public void dealloateMemory(){
+    public void dealloateSegment(){
 
     }
 
