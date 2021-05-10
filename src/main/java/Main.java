@@ -15,13 +15,15 @@ public class Main {
         Main.mmu.forceCompaction();
         Main.mmu.printMemReport();
 
-        // mmu.clean();
+        Main.mmu.clean();
 
-        // Main.runSim1();
-        // mmu.clean();
+        Main.runSim1();
+        Main.mmu.printMemReport();
+        Main.mmu.forceCompaction();
+        Main.mmu.printMemReport();
 
         // Main.runSim2();
-        // mmu.clean();
+        // Main.mmu.clean();
 
     }
 
@@ -55,7 +57,7 @@ public class Main {
 
     // Simulation 0
     private static void runSim0 () {
-        System.out.println("Running Simulation 0...");
+        System.out.println("INITIALIZING SIMULATION 0...");
 
         // size in bytes (should be a power of 2)
         int[][] to_alloc = {
@@ -69,8 +71,26 @@ public class Main {
         for (int i = 0; i < to_alloc.length; i++) {
             createProcess(to_alloc[i]);
         }
-
-
     }
+
+    // Simulation 0
+    private static void runSim1 () {
+        System.out.println("INITIALIZING SIMULATION 1...");
+
+        // size in bytes (should be a power of 2)
+        int[][] to_alloc = {
+                {1, 100, 200, 10},
+                {1, -40, -80, 40},
+                {2, 100, 10, 300},
+                {4, 110, 130},
+                {5, 74, 100},
+        };
+
+        for (int i = 0; i < to_alloc.length; i++) {
+            createProcess(to_alloc[i]);
+        }
+    }
+
+
 
 }

@@ -135,7 +135,7 @@ public class MMU {
 
     public void printMemReport() {
 
-        String str = " \n\n|-------------------------------------------------------------------------------------------------- \n";
+        String str = " \n\n| -------------------------------------------------------------------------------------------------- \n";
         str += "| MEMORY REPORT:\n";
         str += "| -------------------------------------------------------------------------------------------------- \n";
 
@@ -170,6 +170,14 @@ public class MMU {
         frameTable.compact();
     }
 
+
+    /**
+     * Cleans all the state including [known processes, frameTable]
+     */
+    public void clean() {
+        MMU.hm_processes = new HashMap<>();
+        MMU.frameTable = new FrameTable(MMU.instance);
+    }
 
     
 
