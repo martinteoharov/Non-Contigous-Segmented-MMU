@@ -57,27 +57,38 @@ public class FrameTable {
 
     // TODO: compact memory
     public void compact (){
-
         // Traverse frames to find empty blocks and remove them
+
         Iterator<Block> itr = frames.iterator();
-        int count = 0;
-        while(itr.hasNext()){
+
+        // Items that need deleting
+        ArrayList<Block> toDelete = new ArrayList<>();
+
+        for(int c = 0; itr.hasNext(); c++){
             Block block = itr.next();
             if(block.isEmpty()){
-                // remove empty block
-                itr.remove();
+
+                /**
+                 * TODO: Investigate why iterator removal doesn't work even
+                 * when its puts after the call for traverseCompaction(...)
+                 */
+                // itr.remove();
+                // mark for removal
+                toDelete.add(block);
 
                 // get data for the block being removed
                 int pid = block.getPID();
-                int offset = block.getBase();
+                int relocLen = block.getLimit();
 
                 /* --- Find the relocation length/size so we can traverse compact --- */
 
                 // start traverse compaction
-                this.traverseCompaction(count, offset);
-
-                count ++;
+                this.traverseCompaction(c, relocLen);
             }
+        }
+
+        for(Block block : toDelete) {
+            frames.remove(block);
         }
     }
 
@@ -85,28 +96,28 @@ public class FrameTable {
      * Traverses through the arraylist from the startIndex
      * every element visited is relocated to the left by
      * relocLen.
-     *
-     *
      */
 
     private void traverseCompaction (int startIndex, int relocLen) {
+        System.out.println(String.format("Compacting with relocLen: %s", relocLen));
+
         for(int i = startIndex; i < this.frames.size(); i ++ ){
 
             // get physical block
             Block blockptr = this.frames.get(i);
 
-            // extract data
+            // extract physical block data
             int pid = blockptr.getPID();
             int offset = blockptr.getBase();
 
-            // find virtual block
+            // find virtual segment
             int sid = mmu.findSegment(pid, offset);
 
             // move physical block to the left
             blockptr.setOffset(blockptr.getBase() - relocLen);
 
             // reloc virtual memory for this segment
-            mmu.relocSegment(pid, sid, -offset);            
+            mmu.relocSegment(pid, sid, relocLen);
         }
     }
 

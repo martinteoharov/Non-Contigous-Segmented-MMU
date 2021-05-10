@@ -75,7 +75,7 @@ public class MMU {
         if(sid < process.getSegTable().getSize()){
             // Segment exists...
 
-            System.out.println(String.format("IF with PID: %s", pid));
+            // System.out.println(String.format("IF with PID: %s", pid));
 
             // Pull offset data for the existing segment
             Tuple element = process.getSegTable().getElBySID(sid);
@@ -95,8 +95,9 @@ public class MMU {
             process.allocateSegment(sid, allocatedBase, target_limit);
 
         } else {
-            System.out.println(String.format("ELSE with PID: %s", pid));
             // Segment doesn't exist...
+
+            // System.out.println(String.format("ELSE with PID: %s", pid));
 
             // Allocate physical memory
             int allocatedBase = frameTable.allocateMemory(pid, limit);
@@ -112,9 +113,17 @@ public class MMU {
     }
 
     // Relocate the segment to some other offset and limit without resizing
-    public void relocSegment(int pid, int sid, int target_offset){
-        // ...
-        int a = 5;
+    public void relocSegment(int pid, int sid, int relocLen){
+        // find process by PID
+        Process process = hm_processes.get(pid);
+
+        // find segment by SID
+        Tuple segment = process.getSegTable().getElBySID(sid);
+
+        if(segment == null) return;
+
+        // relocate segment to the left with size relocLen
+        segment.setOffset(segment.getOffset() - relocLen);
     }
 
 
@@ -126,32 +135,40 @@ public class MMU {
 
     public void printMemReport() {
 
-        String str = "\n\nMEMORY REPORT:\n";
-        str += " ------------------------------------------------------------------------------ \n";
+        String str = " \n\n|-------------------------------------------------------------------------------------------------- \n";
+        str += "| MEMORY REPORT:\n";
+        str += "| -------------------------------------------------------------------------------------------------- \n";
+
 
         // Grab virtual
-        str += "Virtual Memory:\n";
+        str += "| Virtual Memory:\n";
         for (Map.Entry<Integer, Process> set : hm_processes.entrySet()) {
-            str += "P" + set.getKey() + ": " + set.getValue().getSegTable() + "\n";
+            str += "| P" + set.getKey() + ": " + set.getValue().getSegTable() + "\n";
         }
 
-
-        str += " \n ------------------------------------------------------------------------------ \n";
-
-
-        str += " ------------------------------------------------------------------------------ \n";
-
+        
         // Grab physical
-        str += "Physical Memory:\n";
-        str += MMU.frameTable;
+        str += "| \n";
+        str += "| \n";
+        str += "| Physical Memory:\n";
+        str += "| " + MMU.frameTable;
 
-        str += " \n ------------------------------------------------------------------------------ \n";
+        str += " \n| -------------------------------------------------------------------------------------------------- \n";
 
 
 
         System.out.println(str);
     }
 
+
+    /**
+     * This method exists only for testing purposes
+     * In reality only the FrameTable should initiate
+     * its compactions
+     */
+    public void forceCompaction() {
+        frameTable.compact();
+    }
 
 
     

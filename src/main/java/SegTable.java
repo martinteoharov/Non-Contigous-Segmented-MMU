@@ -41,9 +41,6 @@ public class SegTable {
         String str = "";
         for(int i = 0; i < this.size; i ++){
             Tuple tuple = this.table.get(i);
-
-            // TODO: Track the error with this shit
-            if(tuple == null) break;
             
             str += String.format("S%s:[offset: %s, limit: %s] ", i, tuple.getOffset(), tuple.getLimit());
         }
@@ -67,6 +64,11 @@ class Tuple {
     public int getLimit() {
         return this.y;
     }
+
+    public void setOffset(int offset) {
+        this.x = offset;
+    }
+
 
     private int x;
     private int y;

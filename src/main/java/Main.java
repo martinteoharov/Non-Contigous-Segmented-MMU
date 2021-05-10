@@ -12,6 +12,9 @@ public class Main {
 
         Main.runSim0();
         Main.mmu.printMemReport();
+        Main.mmu.forceCompaction();
+        Main.mmu.printMemReport();
+
         // mmu.clean();
 
         // Main.runSim1();
@@ -57,7 +60,7 @@ public class Main {
         // size in bytes (should be a power of 2)
         int[][] to_alloc = {
                 {1, 100, 200, 10},
-                {1, 100, 200, 10},
+                {1, 100, 200, 40},
                 {2, 100, 200, 300},
                 {4, 110, 130},
                 {5, 74, 100},
