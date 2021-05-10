@@ -17,14 +17,30 @@ public class Process {
         return this.pid;
     }
 
+    public SegTable getSegTable(){
+        return this.segTable;
+    }
+
+    public int getElementByOffset(int offset) {
+        for(int i = 0; i < this.segTable.getSize(); i ++ ){
+            Tuple tuple = this.segTable.getElBySID(i);
+
+            if(tuple.getOffset() == offset)
+                return i;
+        }
+
+        return -1;
+    }
+
     /**
      * Process wants to allocate more memory
      * @param base base of allocated physical memory
      * @param limit limit of allocated physical memory
      */
-    public void allocateSegment(int base, int limit){
-        this.segTable.insertSegment(base, limit);
+    public void allocateSegment(int sid, int base, int limit){
+        this.segTable.insertSegment(sid, base, limit);
     }
+
 
     // Process wants to deallocate memory
     public void dealloateSegment(){

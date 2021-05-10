@@ -11,6 +11,7 @@ public class Main {
         Main.mmu = MMU.get();
 
         Main.runSim0();
+        Main.mmu.printMemReport();
         // mmu.clean();
 
         // Main.runSim1();
@@ -43,7 +44,7 @@ public class Main {
             // Check if segment size is a power of 2...
 
             // Allocate memory segment...
-            Main.mmu.allocateSegment(pid, sid, memSegSize);
+            Main.mmu.allocToSegment(pid, sid, memSegSize);
         }
 
     }
@@ -57,7 +58,7 @@ public class Main {
         int[][] to_alloc = {
                 {1, 100, 200, 10},
                 {1, 100, 200, 10},
-                {2, 100, 200, 300}, 
+                {2, 100, 200, 300},
                 {4, 110, 130},
                 {5, 74, 100},
         };
