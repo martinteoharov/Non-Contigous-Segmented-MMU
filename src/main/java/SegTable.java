@@ -13,6 +13,13 @@ public class SegTable {
         this.table = new HashMap<Integer, Tuple>();
     }
 
+    /**
+     * Inserts a segment into virtual memory.
+     *
+     * @param sid     Segment ID
+     * @param offset  Offset
+     * @param limit   Limit
+     */
     public void insertSegment(int sid, int offset, int limit){
         Tuple entry = new Tuple(offset, limit);
 
@@ -24,8 +31,32 @@ public class SegTable {
         }
     }
 
+    /**
+     * Resize a segment by a given offset and limit
+     *
+     * @param sid     Segment ID
+     * @param offset  Offset
+     * @param limit   Limit
+     */
     public void resizeSegment(int sid, int offset, int limit){
+        if(!this.table.containsKey(sid)) return;
 
+        Tuple entryptr = this.table.get(sid);
+        entryptr.setOffset(offset);
+        entryptr.setLimit(limit);
+    }
+
+    /**
+     * Relocates a segment given a SID and relocation length
+     * @param sid        Segment ID
+     * @param relocLen   Relocation Length
+     */
+    public void relocSegment(int sid, int relocLen) {
+        if(!this.table.containsKey(sid)) return;
+
+        Tuple entryptr = this.table.get(sid);
+        // relocate segment to the left with size relocLen
+        entryptr.setOffset(entryptr.getOffset() - relocLen);
     }
 
     public int getSize() {
@@ -67,6 +98,10 @@ class Tuple {
 
     public void setOffset(int offset) {
         this.x = offset;
+    }
+
+    public void setLimit(int limit) {
+        this.y = limit;
     }
 
 

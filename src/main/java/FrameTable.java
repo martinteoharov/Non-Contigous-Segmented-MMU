@@ -13,6 +13,13 @@ public class FrameTable {
         System.out.println(this.mmu);
     }
 
+    /**
+     * Allocates a physical block of memory at the end.
+     *
+     * @param pid     Process ID
+     * @param limit   The limit we want to allocate to the block
+     * @return the base of the allocated block so that we can map the virtual memory to it
+     */
     public int allocateMemory (int pid, int limit) {
 
         int bSize = frames.size();
@@ -24,7 +31,6 @@ public class FrameTable {
         } else {
            lastBlock = new Block(0, 0, 0, false);
         }
-
 
         int base = lastBlock.getBase() + lastBlock.getLimit();
         Block block = new Block(pid, base, limit, false);
@@ -39,9 +45,13 @@ public class FrameTable {
         return -1;
     }
 
-    public void setBlockToEmpty (int offset) {
-        // Find block and set it to empty
+    /**
+     * Sets a physical block to empty, marking it for deletion (compaction)
+     * @param offset the offset of the physical block
+     */
+    public void setBlockToEmpty (int offset) throws IllegalArgumentException {
 
+        // Find block and set it to empty
         for(Block block : frames){
             if (!block.isEmpty() && block.getBase() == offset){
                 int pid = block.getPID();
@@ -50,12 +60,20 @@ public class FrameTable {
                 int frameInd = frames.indexOf(block);
 
                 frames.set(frameInd, new Block(pid, base, limit, true));
+
+                return;
             }
         }
+
+        throw new IllegalArgumentException("Block with specified offset not found");
 
     }
 
     // TODO: compact memory
+
+    /**
+     * Compacts our physical memory
+     */
     public void compact (){
         // Traverse frames to find empty blocks and remove them
 
@@ -67,12 +85,6 @@ public class FrameTable {
         for(int c = 0; itr.hasNext(); c++){
             Block block = itr.next();
             if(block.isEmpty()){
-
-                /**
-                 * TODO: Investigate why iterator removal doesn't work even
-                 * when its puts after the call for traverseCompaction(...)
-                 */
-                // itr.remove();
                 // mark for removal
                 toDelete.add(block);
 
@@ -84,24 +96,28 @@ public class FrameTable {
 
                 // start traverse compaction
                 this.traverseCompaction(c, relocLen);
+
+                // itr.remove();
             }
         }
 
+        // removed marked blocks
         for(Block block : toDelete) {
             frames.remove(block);
         }
     }
 
     /**
-     * Traverses through the arraylist from the startIndex
-     * every element visited is relocated to the left by
-     * relocLen.
+     * Traverses through our physical memory from the startIndex
+     * to the end, relocating every segment by relocLen
+     *
+     * @param startIndex block to start with
+     * @param relocLen length of relocation
      */
-
     private void traverseCompaction (int startIndex, int relocLen) {
         System.out.println(String.format("Compacting with relocLen: %s", relocLen));
 
-        for(int i = startIndex; i < this.frames.size(); i ++ ){
+        for(int i = startIndex; i < this.frames.size(); i ++ ) {
 
             // get physical block
             Block blockptr = this.frames.get(i);
@@ -117,7 +133,13 @@ public class FrameTable {
             blockptr.setOffset(blockptr.getBase() - relocLen);
 
             // reloc virtual memory for this segment
-            mmu.relocSegment(pid, sid, relocLen);
+
+            try {
+                mmu.relocSegment(pid, sid, relocLen);
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
@@ -139,7 +161,6 @@ public class FrameTable {
  * Currently blocks know the PID of the process they belong to, so that necessary
  * changes can be applied to the virtual representation, in the case of compaction
  */
-
 class Block {
     // simulates a block in memory
 

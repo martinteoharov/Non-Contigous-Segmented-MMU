@@ -29,16 +29,17 @@ public class MMU {
     // There won't be a need for more than one MMU at a time, so we keep this class static
     private static MMU instance = null;
 
-    // Processes in HashMap can be referenced by PIDs
+    // Processes in HashMap can be referenced by PIDs for quick lookup
     private static HashMap<Integer, Process> hm_processes;
 
-    // OS Uses Frame Table to keep track of available frames
+    // OS Uses Frame Table to keep track of Physical Memory
     private static FrameTable frameTable;
-
-    private MMU(){
+    
+    private MMU() {
         MMU.hm_processes = new HashMap<Integer, Process>();
     }
 
+    // Evil singleton hacks
     public static MMU get() {
         if(MMU.instance == null){
             MMU.instance = new MMU();
@@ -49,14 +50,21 @@ public class MMU {
         return MMU.instance;
     }
 
-    /* --- Attach Process --- */
-    public boolean attachProcess (Process process) {
+
+    /**
+     * Attaches and existing process to the MMU.
+     *
+     * @param process
+     * @return boolean - the process was successfully attached
+     */
+    public boolean attachProcess (Process process) throws IllegalArgumentException {
 
         // Pull pid from process
         int pid = process.getPID();
 
-        if(MMU.hm_processes.containsKey(pid))
-            return false;
+        if(MMU.hm_processes.containsKey(pid)) {
+            throw new IllegalArgumentException("Process Exists...");
+        }
 
         // Put process into processes HashMap
         MMU.hm_processes.put(pid, process);
@@ -65,13 +73,22 @@ public class MMU {
     }
 
 
-    /* --- Segment Manager --- */
-    // Handles creation, allocation and deallocation of memory to segments
-    public void allocToSegment(int pid, int sid, int limit){
+    /**
+     * This method is used to handle allocation/deallocation to existing segments
+     * and also creation and removal of segments.
+     *
+     * @param pid     Process ID
+     * @param sid     Segment ID
+     * @param limit   The limit to assign to the segment
+     * @return
+     */
+    public boolean allocToSegment(int pid, int sid, int limit) throws IllegalArgumentException,
+            IndexOutOfBoundsException {
+
         Process process = this.hm_processes.get(pid);
 
         // Check if sid for this pid exists
-        System.out.println(String.format("PID: %s; SID: %s; SEG SIZE: %s", pid, sid, process.getSegTable().getSize()));
+        // System.out.println(String.format("PID: %s; SID: %s; SEG SIZE: %s", pid, sid, process.getSegTable().getSize()));
         if(sid < process.getSegTable().getSize()){
             // Segment exists...
 
@@ -82,18 +99,25 @@ public class MMU {
             int offset = element.getOffset();
             int target_limit = limit + element.getLimit();
 
-            // Set physical block to empty so we can clean it later
-            frameTable.setBlockToEmpty(offset);
+            if (target_limit > 0) {
+                // Set physical block to empty so we can clean it later
+                frameTable.setBlockToEmpty(offset);
 
-            // Allocate new physical block
-            int allocatedBase = frameTable.allocateMemory(pid, target_limit);
-            if(allocatedBase < 0){
-                return;
+                // Allocate new physical block
+                int allocatedBase = frameTable.allocateMemory(pid, target_limit);
+                if(allocatedBase < 0){
+                    throw new IndexOutOfBoundsException("Couldn't Allocate Physical Memory");
+                }
+
+                // Allocate virtual segment for the new physical block (also deletes old one)
+                process.allocateSegment(sid, allocatedBase, target_limit);
+
+            } else if (target_limit == 0) {
+                frameTable.setBlockToEmpty(offset);
+                process.dealloateSegment(sid, 0, 0);
+            } else {
+                throw new IllegalArgumentException("Invalid Request");
             }
-
-            // Allocate virtual segment for the new physical block (also deletes old one)
-            process.allocateSegment(sid, allocatedBase, target_limit);
-
         } else {
             // Segment doesn't exist...
 
@@ -102,37 +126,63 @@ public class MMU {
             // Allocate physical memory
             int allocatedBase = frameTable.allocateMemory(pid, limit);
             if(allocatedBase < 0){
-                return;
+                throw new IndexOutOfBoundsException("Couldn't Allocate Physical Memory");
             }
-            System.out.println(String.format("ALLOCATED BASE: %s", allocatedBase));
+            // System.out.println(String.format("ALLOCATED BASE: %s", allocatedBase));
 
 
             // Allocate virtual memory
             process.allocateSegment(sid, allocatedBase, limit);
         }
+
+        return true;
     }
 
     // Relocate the segment to some other offset and limit without resizing
-    public void relocSegment(int pid, int sid, int relocLen){
+
+    /**
+     * Relocates a segment in virtual (!!) memory by translating its offset "to the left" by
+     * the amount stored in relocLen (relocation length).
+     *
+     * @param pid        Process ID
+     * @param sid        Segment ID
+     * @param relocLen   The size to relocate to the left by
+     */
+    public void relocSegment(int pid, int sid, int relocLen) throws IllegalArgumentException {
+        
         // find process by PID
         Process process = hm_processes.get(pid);
+        if(process == null) {
+            throw new IllegalArgumentException("PID is invalid");
+        }
+        
+        // relocate segment by sid and relocLen
+        SegTable segTable = process.getSegTable();
+        if(segTable == null) {
+            throw new IllegalArgumentException("SID is invalid");
+        }
 
-        // find segment by SID
-        Tuple segment = process.getSegTable().getElBySID(sid);
-
-        if(segment == null) return;
-
-        // relocate segment to the left with size relocLen
-        segment.setOffset(segment.getOffset() - relocLen);
+        segTable.relocSegment(sid, relocLen);
     }
 
 
+    /**
+     * Finds a segment in virtual memory by PID and Physical offset
+     *
+     * @param pid      Process ID
+     * @param offset   Offset of physical block
+     * @return
+     */
     public int findSegment(int pid, int offset){
         Process process = this.hm_processes.get(pid);
         return process.getElementByOffset(offset);
     }
 
 
+    /**
+     * Prints a memory report. Usually called before and after compaction.
+     *
+     */
     public void printMemReport() {
 
         String str = " \n\n| -------------------------------------------------------------------------------------------------- \n";

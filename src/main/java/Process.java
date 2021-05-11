@@ -41,10 +41,14 @@ public class Process {
         this.segTable.insertSegment(sid, base, limit);
     }
 
-
-    // Process wants to deallocate memory
-    public void dealloateSegment(){
-
+    /**
+     * Process wants to deallocate more memory
+     * @param base base of allocated physical memory
+     * @param limit limit of allocated physical memory
+     */
+    public void dealloateSegment(int sid, int base, int limit){
+        //System.out.println(String.format("deallocate segment [base: %s, limit: %s]", base, limit));
+        this.segTable.resizeSegment(sid, base, limit);
     }
 
     
