@@ -32,7 +32,7 @@ public class SegTable {
     }
 
     /**
-     * Resize a segment by a given offset and limit
+     * Resize a segment by a given offset and limit.
      *
      * @param sid     Segment ID
      * @param offset  Offset
@@ -47,7 +47,9 @@ public class SegTable {
     }
 
     /**
-     * Relocates a segment given a SID and relocation length
+     * This method is called after a change in the physical memory .
+     * It relocates the offset that the specific segment points to.
+     *
      * @param sid        Segment ID
      * @param relocLen   Relocation Length
      */
@@ -57,6 +59,26 @@ public class SegTable {
         Tuple entryptr = this.table.get(sid);
         // relocate segment to the left with size relocLen
         entryptr.setOffset(entryptr.getOffset() - relocLen);
+    }
+
+    /**
+     * Deletes a segment and shifts all next segments to the left.
+     *
+     * @param sid
+     */
+    public void deleteSegment(int sid) {
+
+        // Shift segments to the left starting from SID
+        for(int i = sid; i < size - 1; i ++ ){
+            Tuple temp = this.table.get(i+1);
+            this.table.put(i, temp);
+        }
+        // Remove the last element as this is now the element that should
+        // have been deleted
+        this.table.remove(size-1);
+
+        // Size goes down by 1
+        this.size --;
     }
 
     public int getSize() {

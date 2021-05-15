@@ -11,23 +11,23 @@ public class Main {
         Main.mmu = MMU.get();
 
         Main.runSim0();
-        Main.mmu.printMemReport();
+        Main.mmu.printMemReportSimple();
         Main.mmu.forceCompaction();
-        Main.mmu.printMemReport();
+        Main.mmu.printMemReportSimple();
 
-        Main.mmu.clean();
+//        Main.mmu.clean();
 
-        Main.runSim1();
-        Main.mmu.printMemReport();
-        Main.mmu.forceCompaction();
-        Main.mmu.printMemReport();
-
-        Main.mmu.clean();
-
-        Main.runSim2();
-        Main.mmu.printMemReport();
-        Main.mmu.forceCompaction();
-        Main.mmu.printMemReport();
+//        Main.runSim1();
+//        Main.mmu.printMemReport();
+//        Main.mmu.forceCompaction();
+//        Main.mmu.printMemReport();
+//
+//        Main.mmu.clean();
+//
+//        Main.runSim2();
+//        Main.mmu.printMemReport();
+//        Main.mmu.forceCompaction();
+//        Main.mmu.printMemReport();
 
 
     }
@@ -76,10 +76,10 @@ public class Main {
         // size in bytes (should be a power of 2)
         int[][] to_alloc = {
                 {1, 100, 200, 10},
-                {1, 100, 200, 40},
-                {2, 100, 200, 300},
-                {4, 110, 130},
-                {5, 74, 100},
+                {1, 100, -200, 40},
+//                {2, 100, 200, 300},
+//                {4, 110, 130},
+//                {5, 74, 100},
         };
 
         for (int i = 0; i < to_alloc.length; i++) {

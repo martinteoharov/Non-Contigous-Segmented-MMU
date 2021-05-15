@@ -1,4 +1,3 @@
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -154,6 +153,15 @@ public class FrameTable {
         return str;
     }
 
+    public String toStringSimple() {
+        String str = "";
+
+        for(Block frame : frames) {
+            str += frame.toStringSimple();
+        }
+
+        return str;
+    }
 }
 
 
@@ -195,10 +203,19 @@ class Block {
         this.base = offset;
     }
 
+
     @Override
     public String toString() {
         String str = "";
         str += String.format("[base: %d, limit: %d, %s]", this.base, this.limit, this.empty ? "Empty" : "Full");
         return str;
     }
+
+    public String toStringSimple() {
+        String str = "";
+        str += String.format("[%s %s]", this.empty ? "H" : "A", this.limit);
+        return str;
+    }
+
+
 }

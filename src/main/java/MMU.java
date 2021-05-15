@@ -114,7 +114,7 @@ public class MMU {
 
             } else if (target_limit == 0) {
                 frameTable.setBlockToEmpty(offset);
-                process.dealloateSegment(sid, 0, 0);
+                process.deleteSegment(sid);
             } else {
                 throw new IllegalArgumentException("Invalid Request");
             }
@@ -205,7 +205,14 @@ public class MMU {
 
         str += " \n| -------------------------------------------------------------------------------------------------- \n";
 
+        System.out.println(str);
+    }
 
+    public void printMemReportSimple() {
+        // Grab physical
+        String str = "";
+
+        str += String.format("Physical Memory: \n%s", MMU.frameTable.toStringSimple());
 
         System.out.println(str);
     }
@@ -222,7 +229,7 @@ public class MMU {
 
 
     /**
-     * Cleans all the state including [known processes, frameTable]
+     * Cleans all the state including - known processes & frameTable
      */
     public void clean() {
         MMU.hm_processes = new HashMap<>();

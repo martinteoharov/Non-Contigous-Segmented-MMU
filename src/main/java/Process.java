@@ -51,5 +51,9 @@ public class Process {
         this.segTable.resizeSegment(sid, base, limit);
     }
 
+    public void deleteSegment(int sid) {
+        this.segTable.deleteSegment(sid);
+    }
+
     
 }
