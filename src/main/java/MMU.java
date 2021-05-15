@@ -37,6 +37,10 @@ public class MMU {
 
     // Size of Physical Memory
     private static int size = 1024;
+
+    // step by step reporting
+    private boolean stepReporting = false;
+    private boolean complexReporting = false;
     
     private MMU() {
         MMU.hm_processes = new HashMap<Integer, Process>();
@@ -87,6 +91,10 @@ public class MMU {
      */
     public int allocToSegment(int pid, int sid, int limit) throws IllegalArgumentException,
             IndexOutOfBoundsException {
+
+        if(this.stepReporting) {
+            this.print();
+        }
 
         Process process = this.hm_processes.get(pid);
 
@@ -154,6 +162,10 @@ public class MMU {
      */
     public void relocSegment(int pid, int sid, int relocLen) throws IllegalArgumentException {
         
+        if(this.stepReporting) {
+            this.print();
+        }
+
         // find process by PID
         Process process = hm_processes.get(pid);
         if(process == null) {
@@ -190,51 +202,13 @@ public class MMU {
 
 
     /**
-     * Prints a memory report. Usually called before and after compaction.
-     *
-     */
-    public void printMemReport() {
-
-        String str = " \n\n| -------------------------------------------------------------------------------------------------- \n";
-        str += "| MEMORY REPORT:\n";
-        str += "| -------------------------------------------------------------------------------------------------- \n";
-
-
-        // Grab virtual
-        str += "| Virtual Memory:\n";
-        for (Map.Entry<Integer, Process> set : hm_processes.entrySet()) {
-            str += "| P" + set.getKey() + ": " + set.getValue().getSegTable() + "\n";
-        }
-
-        
-        // Grab physical
-        str += "| \n";
-        str += "| \n";
-        str += "| Physical Memory:\n";
-        str += "| " + MMU.frameTable;
-
-        str += " \n| -------------------------------------------------------------------------------------------------- \n";
-
-        System.out.println(str);
-    }
-
-    public void printMemReportSimple() {
-        // Grab physical
-        String str = "";
-
-        str += String.format("Physical Memory: \n%s", MMU.frameTable.toStringSimple());
-
-        System.out.println(str);
-    }
-
-
-    /**
      * This method exists only for testing purposes
      * In reality only the FrameTable should initiate
      * its compactions
      */
     public void forceCompaction() {
         frameTable.compact();
+        this.print();
     }
 
 
@@ -246,7 +220,70 @@ public class MMU {
         MMU.frameTable = new FrameTable(MMU.instance, MMU.size);
     }
 
+
     
+
+    /**
+     * Prints a memory report. Usually called before and after compaction.
+     *
+     */
+    private void printMemReport() {
+
+        String str = " \n\n| -------------------------------------------------------------------------------------------------- \n";
+        str += "| MEMORY REPORT COMPLEX:\n";
+        str += "| -------------------------------------------------------------------------------------------------- \n";
+
+
+        // Grab virtual
+        str += "| Virtual Memory:\n";
+        for (Map.Entry<Integer, Process> set : hm_processes.entrySet()) {
+            str += "| P" + set.getKey() + ": " + set.getValue().getSegTable() + "\n";
+        }
+
+
+        // Grab physical
+        str += "| \n";
+        str += "| \n";
+        str += "| Physical Memory:\n";
+        str += "| " + MMU.frameTable;
+
+        str += " \n| -------------------------------------------------------------------------------------------------- \n";
+
+        System.out.println(str);
+    }
+
+    private void printMemReportSimple() {
+        // Grab physical
+        String str = "--------------------------------------------------------------------------------------------------\n";
+
+        str += String.format("| Memory Report Simple: \n| Physical Memory: %s", MMU.frameTable.toStringSimple());
+
+        str += "\n--------------------------------------------------------------------------------------------------";
+
+        System.out.println(str);
+    }
+
+    public void enableStepByStepReporting() {
+        this.stepReporting = true;
+    }
+
+    public void enableComplexReporting() {
+        this.complexReporting = true;
+    }
+
+    public void print() {
+        if(this.complexReporting) {
+            this.printMemReport();
+        } else {
+            this.printMemReportSimple();
+        }
+    }
+
+
+
+
+
+
 
 
     // Legacy Code LmAo

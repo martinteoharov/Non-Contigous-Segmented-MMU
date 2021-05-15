@@ -9,30 +9,29 @@ public class Main {
     public static void main(String[] args){
 
         Main.mmu = MMU.get();
+        Main.mmu.enableStepByStepReporting();
+        Main.mmu.enableComplexReporting();
 
         Main.runSim0();
-        Main.mmu.printMemReportSimple();
         Main.mmu.forceCompaction();
-        Main.mmu.printMemReportSimple();
 
         Main.mmu.clean();
-
-        Main.runSim1();
-        Main.mmu.printMemReport();
-        Main.mmu.forceCompaction();
-        Main.mmu.printMemReport();
-
-        Main.mmu.clean();
-
-        Main.runSim2();
-        Main.mmu.printMemReport();
-        Main.mmu.forceCompaction();
-        Main.mmu.printMemReport();
-
-
+//
+//        Main.runSim1();
+//        Main.mmu.printMemReport();
+//        Main.mmu.forceCompaction();
+//        Main.mmu.printMemReport();
+//
+//        Main.mmu.clean();
+//
+//        Main.runSim2();
+//        Main.mmu.printMemReport();
+//        Main.mmu.forceCompaction();
+//        Main.mmu.printMemReport();
     }
 
-    private static void createProcess(int args[]) {
+    private static void createProcess(int args[]) throws IllegalArgumentException,
+            IndexOutOfBoundsException {
 
         int pid = args[0];
 
@@ -64,9 +63,9 @@ public class Main {
                     sid --;
                 }
             } catch (IllegalArgumentException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             } catch (IndexOutOfBoundsException e) {
-                e.printStackTrace();     
+//                e.printStackTrace();
             }
         }
 
@@ -75,24 +74,25 @@ public class Main {
 
     // Simulation 0
     private static void runSim0 () {
+        System.out.println("\n\n\n##############################################");
         System.out.println("Running Memory Test 0...");
 
         // size in bytes (should be a power of 2)
         int[][] to_alloc = {
-                {1, 100, 200, 10},
-                {1, 100, -200, 40},
-                {2, 100, 200, 300},
-                {4, 110, 130},
-                {5, 74, 100},
+                {1, 100, 100, 10},
+                {2, 200 },
+                {1, -40, 0, 0},
         };
 
         for (int i = 0; i < to_alloc.length; i++) {
             createProcess(to_alloc[i]);
         }
+        System.out.println("\n\n\n##############################################");
     }
 
     // Simulation 1
     private static void runSim1 () {
+        System.out.println("\n\n\n##############################################");
         System.out.println("Running Memory Test 1...");
 
         // size in bytes (should be a power of 2)
@@ -107,10 +107,12 @@ public class Main {
         for (int i = 0; i < to_alloc.length; i++) {
             createProcess(to_alloc[i]);
         }
+        System.out.println("\n\n\n##############################################");
     }
 
     // Simulation 2
     private static void runSim2 () {
+        System.out.println("\n\n\n##############################################");
         System.out.println("Running Memory Test 2...");
 
         // size in bytes (should be a power of 2)
@@ -125,8 +127,8 @@ public class Main {
         for (int i = 0; i < to_alloc.length; i++) {
             createProcess(to_alloc[i]);
         }
+        System.out.println("\n\n\n##############################################");
+
     }
-
-
 
 }
