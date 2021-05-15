@@ -15,19 +15,19 @@ public class Main {
         Main.mmu.forceCompaction();
         Main.mmu.printMemReportSimple();
 
-//        Main.mmu.clean();
+        Main.mmu.clean();
 
-//        Main.runSim1();
-//        Main.mmu.printMemReport();
-//        Main.mmu.forceCompaction();
-//        Main.mmu.printMemReport();
-//
-//        Main.mmu.clean();
-//
-//        Main.runSim2();
-//        Main.mmu.printMemReport();
-//        Main.mmu.forceCompaction();
-//        Main.mmu.printMemReport();
+        Main.runSim1();
+        Main.mmu.printMemReport();
+        Main.mmu.forceCompaction();
+        Main.mmu.printMemReport();
+
+        Main.mmu.clean();
+
+        Main.runSim2();
+        Main.mmu.printMemReport();
+        Main.mmu.forceCompaction();
+        Main.mmu.printMemReport();
 
 
     }
@@ -46,19 +46,23 @@ public class Main {
             System.err.println("WARNING: " + e.getMessage());
         }
 
+        int sid = 0;
+
         // Create segments and attach to process in MMU
-        for(int i = 1; i < args.length; i ++){
+        for(int i = 1; i < args.length; i ++, sid ++){
 
             // A unique identifier for a segment is the tuple - (pid, sid, memSegSize)
             // ...
-            int sid = i - 1;
             int memSegSize = args[i];
 
             // TODO: Check if segment size is a power of 2...
 
             // Allocate memory segment...
             try {
-                Main.mmu.allocToSegment(pid, sid, memSegSize);
+                int result = Main.mmu.allocToSegment(pid, sid, memSegSize);
+                if(result == 0) {
+                    sid --;
+                }
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             } catch (IndexOutOfBoundsException e) {
@@ -77,9 +81,9 @@ public class Main {
         int[][] to_alloc = {
                 {1, 100, 200, 10},
                 {1, 100, -200, 40},
-//                {2, 100, 200, 300},
-//                {4, 110, 130},
-//                {5, 74, 100},
+                {2, 100, 200, 300},
+                {4, 110, 130},
+                {5, 74, 100},
         };
 
         for (int i = 0; i < to_alloc.length; i++) {

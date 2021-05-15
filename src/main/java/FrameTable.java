@@ -5,42 +5,82 @@ public class FrameTable {
 
     private ArrayList<Block> frames;
     private MMU mmu;
+    private int maxSize;
 
-    public FrameTable(MMU instance){
+    public FrameTable(MMU instance, int maxSize){
+        // Initialize frames
         this.frames = new ArrayList<Block>();
+
+        // Add initial empty frame with pid 0, offset 0 and this.size as the limit
+        Block initial = new Block(0, 0, maxSize, true);
+        this.frames.add(initial);
+
+        // Link MMU Instance so we can manage virtual memory after doing compaction
         this.mmu = instance;
-        System.out.println(this.mmu);
+
+        // Set the max size
+        this.maxSize = maxSize;
     }
 
     /**
-     * Allocates a physical block of memory at the end.
+     * Allocates a physical block using the firstFit principle.
      *
      * @param pid     Process ID
      * @param limit   The limit we want to allocate to the block
-     * @return the base of the allocated block so that we can map the virtual memory to it
+     * @return the base of the allocated block
      */
     public int allocateMemory (int pid, int limit) {
 
-        int bSize = frames.size();
-
-        // Get the last element of our list
-        Block lastBlock;
-        if(frames.size() > 0) {
-            lastBlock = frames.get(frames.size() - 1);
-        } else {
-           lastBlock = new Block(0, 0, 0, false);
+        int index = this.tryFirstFit(limit);
+        if(index < 0) {
+            return -1;
         }
 
-        int base = lastBlock.getBase() + lastBlock.getLimit();
-        Block block = new Block(pid, base, limit, false);
-        frames.add(block);
+        // Grab a pointer to the available element
+        Block emptyptr = this.frames.get(index);
 
-        int eSize = frames.size();
+        // Calculate the offset and limit for the new block
+        int full_offset = emptyptr.getBase();
+        int full_limit = limit;
 
-        if(eSize > bSize) {
-            return base;
+
+        // Calculate the offset and limit for the empty block
+        int empty_offset = full_offset + full_limit;
+        int empty_limit = emptyptr.getLimit() - full_limit;
+
+        if(empty_limit < 0 || empty_offset < 0){
+            // ERROR!
+        }
+        // Resize empty block
+        emptyptr.setOffset(empty_offset);
+        emptyptr.setLimit(empty_limit);
+
+        // Create new block
+        Block fullBlock = new Block(pid, full_offset, full_limit, false);
+
+        // Insert new block in ArrayList shifting all elements after it to the right
+        this.frames.add(index, fullBlock);
+        
+        return full_offset;
+    }
+
+    /**
+     * Finds the first big enough spot in our ArrayList
+     *
+     * @param limit
+     * @return the index of available block
+     */
+    public int tryFirstFit(int limit) {
+
+        // Loop through frames to find the first available spot
+        for(int i = 0; i < this.frames.size(); i ++) {
+            Block block = this.frames.get(i);
+            if(block.isEmpty() && limit < block.getLimit()){
+                return i;
+            }
         }
 
+        // returns -1 if there is no spot found
         return -1;
     }
 
@@ -74,35 +114,39 @@ public class FrameTable {
      * Compacts our physical memory
      */
     public void compact (){
-        // Traverse frames to find empty blocks and remove them
-
-        Iterator<Block> itr = frames.iterator();
 
         // Items that need deleting
         ArrayList<Block> toDelete = new ArrayList<>();
 
-        for(int c = 0; itr.hasNext(); c++){
-            Block block = itr.next();
-            if(block.isEmpty()){
+        for(int i = 0; i < this.frames.size(); i++){
+            Block blockptr = this.frames.get(i);
+
+            if(blockptr.isEmpty()){
                 // mark for removal
-                toDelete.add(block);
+                toDelete.add(blockptr);
 
                 // get data for the block being removed
-                int pid = block.getPID();
-                int relocLen = block.getLimit();
+                int pid = blockptr.getPID();
+                int relocLen = blockptr.getLimit();
 
                 /* --- Find the relocation length/size so we can traverse compact --- */
 
                 // start traverse compaction
-                this.traverseCompaction(c, relocLen);
-
-                // itr.remove();
+                this.traverseCompaction(i, relocLen);
             }
         }
 
-        // removed marked blocks
-        for(Block block : toDelete) {
-            frames.remove(block);
+        // if our last block is empty
+        Block lastBlock_ptr = this.frames.get(this.frames.size() - 1);
+        if(lastBlock_ptr.isEmpty()){
+            for(Block block : toDelete) {
+                if(block == lastBlock_ptr) continue;
+
+                this.frames.remove(block);
+                lastBlock_ptr.joinRight(block);
+            }
+        } else {
+            // ...
         }
     }
 
@@ -120,6 +164,8 @@ public class FrameTable {
 
             // get physical block
             Block blockptr = this.frames.get(i);
+
+            if(blockptr.isEmpty()) continue;
 
             // extract physical block data
             int pid = blockptr.getPID();
@@ -168,6 +214,8 @@ public class FrameTable {
 /**
  * Currently blocks know the PID of the process they belong to, so that necessary
  * changes can be applied to the virtual representation, in the case of compaction
+ *
+ * Empty blocks should always have a PID of 0!!!
  */
 class Block {
     // simulates a block in memory
@@ -201,6 +249,14 @@ class Block {
 
     public void setOffset(int offset) {
         this.base = offset;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public void joinRight(Block block) {
+        this.limit += block.getLimit();
     }
 
 

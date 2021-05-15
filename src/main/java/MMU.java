@@ -34,6 +34,9 @@ public class MMU {
 
     // OS Uses Frame Table to keep track of Physical Memory
     private static FrameTable frameTable;
+
+    // Size of Physical Memory
+    private static int size = 1024;
     
     private MMU() {
         MMU.hm_processes = new HashMap<Integer, Process>();
@@ -45,7 +48,7 @@ public class MMU {
             MMU.instance = new MMU();
         }
 
-        MMU.frameTable = new FrameTable(MMU.instance);
+        MMU.frameTable = new FrameTable(MMU.instance, MMU.size);
 
         return MMU.instance;
     }
@@ -82,7 +85,7 @@ public class MMU {
      * @param limit   The limit to assign to the segment
      * @return
      */
-    public boolean allocToSegment(int pid, int sid, int limit) throws IllegalArgumentException,
+    public int allocToSegment(int pid, int sid, int limit) throws IllegalArgumentException,
             IndexOutOfBoundsException {
 
         Process process = this.hm_processes.get(pid);
@@ -115,6 +118,7 @@ public class MMU {
             } else if (target_limit == 0) {
                 frameTable.setBlockToEmpty(offset);
                 process.deleteSegment(sid);
+                return 0;
             } else {
                 throw new IllegalArgumentException("Invalid Request");
             }
@@ -135,7 +139,7 @@ public class MMU {
             process.allocateSegment(sid, allocatedBase, limit);
         }
 
-        return true;
+        return 1;
     }
 
     // Relocate the segment to some other offset and limit without resizing
@@ -175,7 +179,13 @@ public class MMU {
      */
     public int findSegment(int pid, int offset){
         Process process = this.hm_processes.get(pid);
-        return process.getElementByOffset(offset);
+        int temp = process.getElementByOffset(offset);
+        if(temp < 0) {
+            // ERROR!
+            return -1;
+        } else {
+            return temp;
+        }
     }
 
 
@@ -233,7 +243,7 @@ public class MMU {
      */
     public void clean() {
         MMU.hm_processes = new HashMap<>();
-        MMU.frameTable = new FrameTable(MMU.instance);
+        MMU.frameTable = new FrameTable(MMU.instance, MMU.size);
     }
 
     
